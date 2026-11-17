@@ -172,7 +172,7 @@ jobs:
           cp -r obs-studio-31.0.1/libobs/graphics obs-inc/obs/
           cp -r obs-studio-31.0.1/libobs/media-io obs-inc/obs/
           cp -r obs-studio-31.0.1/libobs/callback obs-inc/obs/
-          cp obs-studio-31.0.1/UI/obs-frontend-api/obs-frontend-api.h obs-inc/
+          cp obs-studio-31.0.1/UI/obs-frontend-api/obs-frontend-api.h obs-inc/obs/
           cat << 'EOF' > obs-inc/obs/obsconfig.h
           #pragma once
           #define OBS_VERSION "31.0.1"
