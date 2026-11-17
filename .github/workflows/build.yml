@@ -96,7 +96,7 @@ jobs:
 
           Invoke-WebRequest -Uri "https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz" -OutFile sword.tar.gz
           tar -xzf sword.tar.gz
-          Get-ChildItem sword-1.9.0 -Include CMakeLists.txt,*.cmake -Recurse | ForEach-Object {
+          Get-Item sword-1.9.0/CMakeLists.txt, sword-1.9.0/cmake/*.cmake -ErrorAction SilentlyContinue | ForEach-Object {
             (Get-Content $_.FullName -Raw) -replace '/MT', '/MD' -replace 'MultiThreaded(?!DLL)', 'MultiThreadedDLL' | Set-Content $_.FullName
           }
           cmake -B sword-build -S sword-1.9.0 `
