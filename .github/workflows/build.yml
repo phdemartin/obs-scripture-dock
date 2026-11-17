@@ -205,7 +205,7 @@ jobs:
           tar -xzf zlib.tar.gz
           cmake -B zlib-build -S zlib-1.3.1 \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
             -DZLIB_BUILD_EXAMPLES=OFF
           cmake --build zlib-build --target zlibstatic -j4
           mkdir -p zlib-inst/include zlib-inst/lib
@@ -217,7 +217,7 @@ jobs:
           cmake -B sword-build -S sword-1.9.0 \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.15 \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
             -DLIBSWORD_LIBRARY_TYPE=Static \
             -DSWORD_BUILD_TESTS=OFF \
             -DSWORD_BUILD_EXAMPLES=OFF \
@@ -233,12 +233,12 @@ jobs:
           SWORD_LIB=$(find "$PWD/sword-build" -name "libsword.a" | head -n 1)
           cmake -B build-mac -S . \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
             -DOBS_INCLUDE_DIRS="$PWD/obs-inc;$PWD/obs-inc/obs" \
             -DOBS_LIBRARIES="$PWD/obs-lib/libobs.framework/libobs;$FRONTEND_LIB" \
             -DSWORD_FOUND=TRUE \
             -DSWORD_INCLUDE_DIRS="$PWD/sword-1.9.0/include" \
-            -DSWORD_LIBRARIES="$SWORD_LIB;$PWD/zlib-inst/lib/libz.a"
+            -DSWORD_LIBRARIES="$SWORD_LIB;$PWD/zlib-inst/lib/libz.a;bz2;lzma"
           perl -pi -e 's/-framework\s+AGL//g' build-mac/CMakeFiles/obs-scripture-dock.dir/link.txt
           cmake --build build-mac -j4
           file build-mac/obs-scripture-dock.plugin/Contents/MacOS/obs-scripture-dock
