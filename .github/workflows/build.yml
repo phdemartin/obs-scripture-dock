@@ -144,12 +144,29 @@ jobs:
             choco install innosetup -y --no-progress
           }
           & $iscc installer/windows/obs-scripture-dock.iss
-      - uses: actions/upload-artifact@v4
+      - id: upload-win
+        uses: actions/upload-artifact@v4
         with:
           name: obs-scripture-dock-windows-x64
           path: |
             dist/obs-scripture-dock-windows-x64.zip
             dist/obs-scripture-dock-windows-x64-setup.exe
+      - name: Sign Windows Artifacts (SignPath)
+        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'obs-scripture-dock' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.upload-win.outputs.artifact-id }}
+          output-artifact-directory: dist/signed
+      - name: Upload Signed Windows Artifacts
+        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-scripture-dock-windows-x64-signed
+          path: dist/signed/*
 
   macos:
     runs-on: macos-latest
