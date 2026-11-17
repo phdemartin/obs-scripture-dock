@@ -239,6 +239,7 @@ jobs:
             -DSWORD_FOUND=TRUE \
             -DSWORD_INCLUDE_DIRS="$PWD/sword-1.9.0/include" \
             -DSWORD_LIBRARIES="$SWORD_LIB;$PWD/zlib-inst/lib/libz.a"
+          perl -pi -e 's/-framework\s+AGL//g' build-mac/CMakeFiles/obs-scripture-dock.dir/link.txt
           cmake --build build-mac -j4
           file build-mac/obs-scripture-dock.plugin/Contents/MacOS/obs-scripture-dock
           otool -L build-mac/obs-scripture-dock.plugin/Contents/MacOS/obs-scripture-dock
