@@ -85,9 +85,12 @@ jobs:
             -DZLIB_BUILD_EXAMPLES=OFF `
             "-DCMAKE_INSTALL_PREFIX=zlib-inst"
           cmake --build zlib-build --config Release --target zlibstatic
-          cmake --install zlib-build --config Release
+          New-Item -ItemType Directory -Force -Path zlib-inst/include, zlib-inst/lib | Out-Null
+          Copy-Item zlib-1.3.1/zlib.h zlib-inst/include/ -Force
+          Copy-Item zlib-build/zconf.h zlib-inst/include/ -Force
+          Copy-Item zlib-build/Release/zlibstatic.lib zlib-inst/lib/zlib.lib -Force
           $zlibInc = (Resolve-Path "zlib-inst/include").Path -replace '\\', '/'
-          $zlibLib = (Get-ChildItem "zlib-inst/lib" -Filter "*.lib" | Select-Object -First 1).FullName -replace '\\', '/'
+          $zlibLib = (Resolve-Path "zlib-inst/lib/zlib.lib").Path -replace '\\', '/'
 
           Invoke-WebRequest -Uri "https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz" -OutFile sword.tar.gz
           tar -xzf sword.tar.gz
