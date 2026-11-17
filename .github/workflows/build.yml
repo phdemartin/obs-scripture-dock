@@ -136,7 +136,123 @@ jobs:
           $dll = Get-ChildItem -Path build-win -Filter "obs-scripture-dock.dll" -Recurse | Select-Object -First 1
           Copy-Item $dll.FullName dist/obs-scripture-dock/bin/64bit/
           Compress-Archive -Path dist/obs-scripture-dock -DestinationPath dist/obs-scripture-dock-windows-x64.zip -Force
+      - name: Build Windows Installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          & $iscc installer/windows/obs-scripture-dock.iss
       - uses: actions/upload-artifact@v4
         with:
           name: obs-scripture-dock-windows-x64
-          path: dist/obs-scripture-dock-windows-x64.zip
+          path: |
+            dist/obs-scripture-dock-windows-x64.zip
+            dist/obs-scripture-dock-windows-x64-setup.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          version: '6.8.1'
+      - name: Fetch OBS Studio 31.0.1 SDK & Frameworks (Universal)
+        run: |
+          curl -sL https://github.com/obsproject/obs-studio/archive/refs/tags/31.0.1.tar.gz -o obs-src.tar.gz
+          tar -xzf obs-src.tar.gz
+          mkdir -p obs-inc/obs obs-lib
+          cp -r obs-studio-31.0.1/libobs/*.h obs-inc/obs/
+          cp -r obs-studio-31.0.1/libobs/util obs-inc/obs/
+          cp -r obs-studio-31.0.1/libobs/graphics obs-inc/obs/
+          cp -r obs-studio-31.0.1/libobs/media-io obs-inc/obs/
+          cp -r obs-studio-31.0.1/libobs/callback obs-inc/obs/
+          cp obs-studio-31.0.1/UI/obs-frontend-api/obs-frontend-api.h obs-inc/
+          cat << 'EOF' > obs-inc/obs/obsconfig.h
+          #pragma once
+          #define OBS_VERSION "31.0.1"
+          #define OBS_DATA_PATH "../../data"
+          #define OBS_INSTALL_PREFIX ""
+          #define OBS_PLUGIN_DESTINATION "obs-plugins"
+          EOF
+
+          curl -sL https://github.com/obsproject/obs-studio/releases/download/31.0.1/OBS-Studio-31.0.1-macOS-Apple.dmg -o obs-arm64.dmg
+          curl -sL https://github.com/obsproject/obs-studio/releases/download/31.0.1/OBS-Studio-31.0.1-macOS-Intel.dmg -o obs-x64.dmg
+          hdiutil attach obs-arm64.dmg -nobrowse -mountpoint /Volumes/obs-arm64
+          hdiutil attach obs-x64.dmg -nobrowse -mountpoint /Volumes/obs-x64
+
+          cp -R "/Volumes/obs-arm64/OBS.app/Contents/Frameworks/libobs.framework" obs-lib/
+          lipo -create \
+            "/Volumes/obs-arm64/OBS.app/Contents/Frameworks/libobs.framework/Versions/A/libobs" \
+            "/Volumes/obs-x64/OBS.app/Contents/Frameworks/libobs.framework/Versions/A/libobs" \
+            -output "obs-lib/libobs.framework/Versions/A/libobs"
+
+          FRONTEND_ARM=$(find "/Volumes/obs-arm64/OBS.app/Contents/Frameworks" -maxdepth 1 -name "*obs-frontend-api*.dylib" | head -n 1)
+          FRONTEND_X64=$(find "/Volumes/obs-x64/OBS.app/Contents/Frameworks" -maxdepth 1 -name "*obs-frontend-api*.dylib" | head -n 1)
+          FRONTEND_NAME=$(basename "$FRONTEND_ARM")
+          lipo -create "$FRONTEND_ARM" "$FRONTEND_X64" -output "obs-lib/$FRONTEND_NAME"
+
+          hdiutil detach /Volumes/obs-arm64
+          hdiutil detach /Volumes/obs-x64
+      - name: Build zlib & libsword (Static Universal)
+        run: |
+          curl -sL https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz -o zlib.tar.gz
+          tar -xzf zlib.tar.gz
+          cmake -B zlib-build -S zlib-1.3.1 \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DZLIB_BUILD_EXAMPLES=OFF
+          cmake --build zlib-build --target zlibstatic -j4
+          mkdir -p zlib-inst/include zlib-inst/lib
+          cp zlib-1.3.1/zlib.h zlib-build/zconf.h zlib-inst/include/
+          cp zlib-build/libz.a zlib-inst/lib/
+
+          curl -sL https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz -o sword.tar.gz
+          tar -xzf sword.tar.gz
+          cmake -B sword-build -S sword-1.9.0 \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.15 \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DLIBSWORD_LIBRARY_TYPE=Static \
+            -DSWORD_BUILD_TESTS=OFF \
+            -DSWORD_BUILD_EXAMPLES=OFF \
+            -DSWORD_BUILD_UTILS=OFF \
+            -DZLIB_INCLUDE_DIR="$PWD/zlib-inst/include" \
+            -DZLIB_LIBRARY="$PWD/zlib-inst/lib/libz.a"
+          cmake --build sword-build --target sword_static -j4
+      - name: Configure & Build macOS Universal Plugin & PKG
+        run: |
+          FRONTEND_LIB=$(find "$PWD/obs-lib" -maxdepth 1 -name "*obs-frontend-api*.dylib" | head -n 1)
+          SWORD_LIB=$(find "$PWD/sword-build" -name "libsword.a" | head -n 1)
+          cmake -B build-mac -S . \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DOBS_INCLUDE_DIRS="$PWD/obs-inc;$PWD/obs-inc/obs" \
+            -DOBS_LIBRARIES="$PWD/obs-lib/libobs.framework/libobs;$FRONTEND_LIB" \
+            -DSWORD_FOUND=TRUE \
+            -DSWORD_INCLUDE_DIRS="$PWD/sword-1.9.0/include" \
+            -DSWORD_LIBRARIES="$SWORD_LIB;$PWD/zlib-inst/lib/libz.a"
+          cmake --build build-mac -j4
+          file build-mac/obs-scripture-dock.plugin/Contents/MacOS/obs-scripture-dock
+          otool -L build-mac/obs-scripture-dock.plugin/Contents/MacOS/obs-scripture-dock
+          codesign --force --deep --sign - build-mac/obs-scripture-dock.plugin
+
+          mkdir -p dist pkg-root/Library/Application\ Support/obs-studio/plugins
+          ditto -c -k --sequesterRsrc --keepParent build-mac/obs-scripture-dock.plugin dist/obs-scripture-dock-macos-universal.zip
+          cp -R build-mac/obs-scripture-dock.plugin pkg-root/Library/Application\ Support/obs-studio/plugins/
+          pkgbuild --root pkg-root \
+            --identifier com.phdemartin.obs-scripture-dock \
+            --version 1.0.0 \
+            --install-location / \
+            dist/obs-scripture-dock-macos-universal.pkg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obs-scripture-dock-macos-universal
+          path: |
+            dist/obs-scripture-dock-macos-universal.zip
+            dist/obs-scripture-dock-macos-universal.pkg

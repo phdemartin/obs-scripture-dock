@@ -30,6 +30,16 @@ add_library(obs-scripture-dock MODULE
 
 set_target_properties(obs-scripture-dock PROPERTIES PREFIX "")
 
+if(APPLE)
+    set_target_properties(obs-scripture-dock PROPERTIES
+        BUNDLE TRUE
+        BUNDLE_EXTENSION "plugin"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/Info.plist.in"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@executable_path/../Frameworks"
+    )
+endif()
+
 target_link_libraries(obs-scripture-dock PRIVATE
     ${OBS_LIBS}
     Qt6::Core
