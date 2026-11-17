@@ -41,9 +41,17 @@ sudo apt install ./obs-scripture-dock_1.0.0_amd64.deb
 1. **Installer (`.exe`):** Download `obs-scripture-dock-windows-x64-setup.exe` from [Releases](https://github.com/phdemartin/obs-scripture-dock/releases) and run it (auto-detects your OBS Studio installation folder; `libsword` is statically bundled).
 2. **Portable Archive (`.zip`):** Download `obs-scripture-dock-windows-x64.zip` and copy `obs-scripture-dock.dll` into `C:\Program Files\obs-studio\obs-plugins\64bit\`.
 
+> **Note about Windows SmartScreen / Browser Warnings:**  
+> This is a free, open-source project currently in early release/beta, built transparently via GitHub Actions directly from this public source code — **it is not a virus**. Because it does not yet have a paid commercial code-signing certificate, Windows and your browser (Edge/Chrome) may show an *"Unknown publisher"* warning:
+> - **Browser download:** Click **`...` → Keep → Show more → Keep anyway** (*Conserver → Plus d'infos → Conserver quand même*).
+> - **Running the `.exe`:** Click **More info → Run anyway** (*Informations complémentaires → Exécuter quand même*).
+> *(You can also use the portable `.zip` archive if you prefer.)*
+
 ### macOS (Universal: Apple Silicon & Intel) — `.pkg` Installer or `.zip`
 1. **Installer (`.pkg`):** Download `obs-scripture-dock-macos-universal.pkg` from [Releases](https://github.com/phdemartin/obs-scripture-dock/releases) and open it to install `obs-scripture-dock.plugin` into `/Library/Application Support/obs-studio/plugins/` (`libsword` is statically bundled).
 2. **Portable Archive (`.zip`):** Download `obs-scripture-dock-macos-universal.zip`, extract `obs-scripture-dock.plugin`, and move it to `~/Library/Application Support/obs-studio/plugins/`.
+
+> **Note about macOS Gatekeeper:** Since the `.pkg`/`.plugin` is ad-hoc signed, if macOS blocks it on first launch, right-click → **Open** (or allow it in **System Settings → Privacy & Security**).
 
 ### Build from Source (Linux / Cross-platform CMake)
 ```bash
@@ -53,7 +61,7 @@ sudo apt install cmake g++ pkg-config libobs-dev libsword-dev qt6-base-dev
 
 ---
 
-## Code Signing & License
+## License & Privacy
 
 - Licensed under the **GNU General Public License v2.0** ([LICENSE](LICENSE)).
-- Free code signing provided by [SignPath.io](https://signpath.io/), using a certificate by [SignPath Foundation](https://signpath.org/).
+- Collects no user data ([PRIVACY.md](PRIVACY.md)).
