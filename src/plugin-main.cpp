@@ -93,26 +93,19 @@ struct obs_source_info bible_source_info = {
     .destroy = bible_source_destroy,
 };
 
-void on_frontend_event(enum obs_frontend_event event, void *)
-{
-    if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-        auto *main_win = static_cast<QWidget *>(obs_frontend_get_main_window());
-        auto *dock = new bible::BibleDockWidget(main_win);
-        obs_frontend_add_dock_by_id("obs_scripture_dock", "Scripture Dock", dock);
-    }
-}
-
 } // namespace
 
 bool obs_module_load(void)
 {
     obs_register_source(&bible_source_info);
-    obs_frontend_add_event_callback(on_frontend_event, nullptr);
+    auto *main_win = static_cast<QWidget *>(obs_frontend_get_main_window());
+    if (main_win) {
+        auto *dock = new bible::BibleDockWidget(main_win);
+        obs_frontend_add_dock_by_id("obs_scripture_dock", "Scripture Dock", dock);
+    }
     return true;
 }
 
 void obs_module_unload(void)
 {
-    obs_frontend_remove_event_callback(on_frontend_event, nullptr);
-    obs_frontend_remove_dock("obs_scripture_dock");
 }
