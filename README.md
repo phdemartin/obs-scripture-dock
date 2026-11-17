@@ -37,9 +37,16 @@ tar -xzf obs-scripture-dock-1.0.0-linux-x86_64.tar.gz -C ~/.config/obs-studio/pl
 sudo apt install ./obs-scripture-dock_1.0.0_amd64.deb
 ```
 
+### Windows (64-bit) — Installer (Recommended) or Portable ZIP
+1. **Installer (`.exe`):** Download `obs-scripture-dock-windows-x64-setup.exe` from [Releases](https://github.com/phdemartin/obs-scripture-dock/releases) and run it (auto-detects your OBS Studio installation folder; `libsword` is statically bundled).
+2. **Portable Archive (`.zip`):** Download `obs-scripture-dock-windows-x64.zip` and copy `obs-scripture-dock.dll` into `C:\Program Files\obs-studio\obs-plugins\64bit\`.
+
+### macOS (Universal: Apple Silicon & Intel) — `.pkg` Installer or `.zip`
+1. **Installer (`.pkg`):** Download `obs-scripture-dock-macos-universal.pkg` from [Releases](https://github.com/phdemartin/obs-scripture-dock/releases) and open it to install `obs-scripture-dock.plugin` into `/Library/Application Support/obs-studio/plugins/` (`libsword` is statically bundled).
+2. **Portable Archive (`.zip`):** Download `obs-scripture-dock-macos-universal.zip`, extract `obs-scripture-dock.plugin`, and move it to `~/Library/Application Support/obs-studio/plugins/`.
+
 ### Build from Source (Linux / Cross-platform CMake)
 ```bash
 sudo apt install cmake g++ pkg-config libobs-dev libsword-dev qt6-base-dev
 ./scripts/install_local.sh
 ```
-*(Note: CMakeLists.txt makes `libsword` optional via `HAVE_SWORD`, so the C++ / Qt6 core can also be compiled on Windows/macOS against the OBS Studio SDK.)*
