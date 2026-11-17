@@ -82,6 +82,8 @@ jobs:
           tar -xzf zlib.tar.gz
           cmake -B zlib-build -S zlib-1.3.1 `
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+            "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW" `
+            "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL" `
             -DZLIB_BUILD_EXAMPLES=OFF `
             "-DCMAKE_INSTALL_PREFIX=zlib-inst"
           cmake --build zlib-build --config Release --target zlibstatic
@@ -96,6 +98,10 @@ jobs:
           tar -xzf sword.tar.gz
           cmake -B sword-build -S sword-1.9.0 `
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+            "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW" `
+            "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL" `
+            "-DCMAKE_CXX_FLAGS_RELEASE=/MD /O2 /Ob2 /DNDEBUG" `
+            "-DCMAKE_C_FLAGS_RELEASE=/MD /O2 /Ob2 /DNDEBUG" `
             "-DLIBSWORD_LIBRARY_TYPE=Static" `
             -DSWORD_BUILD_TESTS=OFF `
             -DSWORD_BUILD_EXAMPLES=OFF `
