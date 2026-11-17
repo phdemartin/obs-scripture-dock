@@ -9,6 +9,7 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QProcess>
 #include <QPushButton>
 #include <QThread>
 #include <QVBoxLayout>
@@ -90,11 +91,16 @@ protected:
         QDir().mkpath(tmp);
 
         QString tgz = tmp + "/mods.d.tar.gz";
-        QString cmd = QString("curl -fsSL -L 'https://crosswire.org/ftpmirror/pub/sword/raw/mods.d.tar.gz' -o '%1' && tar -xzf '%1' -C '%2'")
-                          .arg(tgz, tmp);
-        int rc = std::system(cmd.toUtf8().constData());
-        if (rc != 0) {
+        QProcess curl;
+        curl.start("curl", {"-fsSL", "-L", "https://crosswire.org/ftpmirror/pub/sword/raw/mods.d.tar.gz", "-o", tgz});
+        if (!curl.waitForFinished(30000) || curl.exitCode() != 0) {
             error_msg = "Impossible de télécharger le catalogue CrossWire SWORD (vérifiez votre connexion Internet).";
+            return;
+        }
+        QProcess tar;
+        tar.start("tar", {"-xzf", tgz, "-C", tmp});
+        if (!tar.waitForFinished(15000) || tar.exitCode() != 0) {
+            error_msg = "Impossible d'extraire le catalogue CrossWire SWORD.";
             return;
         }
         results = parse_sword_repo_dir(tmp + "/mods.d");
@@ -119,14 +125,26 @@ protected:
         QDir().mkpath(sword_dir);
         QString zip_path = QDir::tempPath() + "/" + mod_id_ + ".zip";
         QString url = QString("https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/%1.zip").arg(mod_id_);
-        QString cmd = QString("curl -fsSL -L '%1' -o '%2' && unzip -qo '%2' -d '%3' && rm -f '%2'")
-                          .arg(url, zip_path, sword_dir);
-        int rc = std::system(cmd.toUtf8().constData());
-        if (rc != 0) {
-            error_msg = QString("Échec du téléchargement de %1 (vérifiez que 'curl' et 'unzip' sont installés).").arg(mod_id_);
+        QProcess curl;
+        curl.start("curl", {"-fsSL", "-L", url, "-o", zip_path});
+        if (!curl.waitForFinished(60000) || curl.exitCode() != 0) {
+            error_msg = QString("Échec du téléchargement de %1.").arg(mod_id_);
             ok = false;
             return;
         }
+#ifdef _WIN32
+        QProcess ext;
+        ext.start("tar", {"-xf", zip_path, "-C", sword_dir});
+#else
+        QProcess ext;
+        ext.start("unzip", {"-qo", zip_path, "-d", sword_dir});
+#endif
+        if (!ext.waitForFinished(30000) || ext.exitCode() != 0) {
+            error_msg = QString("Échec de l'extraction de %1.").arg(mod_id_);
+            ok = false;
+            return;
+        }
+        QFile::remove(zip_path);
         ok = true;
     }
 };
