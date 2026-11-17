@@ -78,13 +78,17 @@ jobs:
       - name: Build zlib & libsword (Static)
         shell: pwsh
         run: |
-          vcpkg install zlib:x64-windows-static-md
-          $vcpkgRoot = ($env:VCPKG_ROOT -replace '\\', '/')
-          if (-not $vcpkgRoot -or -not (Test-Path "$vcpkgRoot/installed/x64-windows-static-md")) {
-            $vcpkgRoot = "C:/vcpkg"
-          }
-          $vcpkgInc = "$vcpkgRoot/installed/x64-windows-static-md/include"
-          $vcpkgLib = "$vcpkgRoot/installed/x64-windows-static-md/lib/zlib.lib"
+          Invoke-WebRequest -Uri "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz" -OutFile zlib.tar.gz
+          tar -xzf zlib.tar.gz
+          cmake -B zlib-build -S zlib-1.3.1 `
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+            -DZLIB_BUILD_EXAMPLES=OFF `
+            "-DCMAKE_INSTALL_PREFIX=zlib-inst"
+          cmake --build zlib-build --config Release --target zlibstatic
+          cmake --install zlib-build --config Release
+          $zlibInc = (Resolve-Path "zlib-inst/include").Path -replace '\\', '/'
+          $zlibLib = (Get-ChildItem "zlib-inst/lib" -Filter "*.lib" | Select-Object -First 1).FullName -replace '\\', '/'
+
           Invoke-WebRequest -Uri "https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz" -OutFile sword.tar.gz
           tar -xzf sword.tar.gz
           cmake -B sword-build -S sword-1.9.0 `
@@ -93,14 +97,14 @@ jobs:
             -DSWORD_BUILD_TESTS=OFF `
             -DSWORD_BUILD_EXAMPLES=OFF `
             -DSWORD_BUILD_UTILS=OFF `
-            "-DZLIB_INCLUDE_DIR=$vcpkgInc" `
-            "-DZLIB_LIBRARY=$vcpkgLib" `
+            "-DZLIB_INCLUDE_DIR=$zlibInc" `
+            "-DZLIB_LIBRARY=$zlibLib" `
             "-DCMAKE_INSTALL_PREFIX=sword-inst"
           cmake --build sword-build --config Release --target sword_static
           cmake --install sword-build --config Release --component core || $true
           New-Item -ItemType Directory -Force -Path sword-inst/lib | Out-Null
           Get-ChildItem sword-build -Filter "*sword*.lib" -Recurse | Select-Object -First 1 | Copy-Item -Destination sword-inst/lib/sword.lib -Force
-          Copy-Item $vcpkgLib sword-inst/lib/zlib.lib -Force
+          Copy-Item $zlibLib sword-inst/lib/zlib.lib -Force
       - name: Configure & Build Windows DLL
         shell: pwsh
         run: |
