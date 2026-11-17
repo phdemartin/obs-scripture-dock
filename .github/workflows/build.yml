@@ -78,11 +78,15 @@ jobs:
       - name: Build zlib & libsword (Static)
         shell: pwsh
         run: |
-          vcpkg install zlib:x64-windows-static
+          vcpkg install zlib:x64-windows-static-md
+          $vcpkgRoot = ($env:VCPKG_ROOT -replace '\\', '/')
+          if (-not $vcpkgRoot -or -not (Test-Path "$vcpkgRoot/installed/x64-windows-static-md")) {
+            $vcpkgRoot = "C:/vcpkg"
+          }
+          $vcpkgInc = "$vcpkgRoot/installed/x64-windows-static-md/include"
+          $vcpkgLib = "$vcpkgRoot/installed/x64-windows-static-md/lib/zlib.lib"
           Invoke-WebRequest -Uri "https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz" -OutFile sword.tar.gz
           tar -xzf sword.tar.gz
-          $vcpkgInc = "C:/vcpkg/installed/x64-windows-static/include"
-          $vcpkgLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
           cmake -B sword-build -S sword-1.9.0 `
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
             "-DLIBSWORD_LIBRARY_TYPE=Static" `
@@ -96,6 +100,7 @@ jobs:
           cmake --install sword-build --config Release --component core || $true
           New-Item -ItemType Directory -Force -Path sword-inst/lib | Out-Null
           Get-ChildItem sword-build -Filter "*sword*.lib" -Recurse | Select-Object -First 1 | Copy-Item -Destination sword-inst/lib/sword.lib -Force
+          Copy-Item $vcpkgLib sword-inst/lib/zlib.lib -Force
       - name: Configure & Build Windows DLL
         shell: pwsh
         run: |
@@ -103,7 +108,7 @@ jobs:
           $obsLib = (Resolve-Path "obs-lib").Path -replace '\\', '/'
           $swordInc = (Resolve-Path "sword-1.9.0/include").Path -replace '\\', '/'
           $swordLib = (Resolve-Path "sword-inst/lib/sword.lib").Path -replace '\\', '/'
-          $zlibLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
+          $zlibLib = (Resolve-Path "sword-inst/lib/zlib.lib").Path -replace '\\', '/'
           cmake -B build-win -S . `
             "-DOBS_INCLUDE_DIRS=$obsInc;$obsInc/obs" `
             "-DOBS_LIB_DIRS=$obsLib" `
