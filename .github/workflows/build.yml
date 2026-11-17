@@ -227,6 +227,8 @@ jobs:
           cmake --build sword-build --target sword_static -j4
       - name: Configure & Build macOS Universal Plugin & PKG
         run: |
+          # Xcode 26 SDK removed AGL.framework referenced by Qt 6.8.1 WrapOpenGL
+          find "$QT_ROOT_DIR/lib/cmake" -name "*.cmake" -exec perl -pi -e 's/-framework\s+AGL//g; s/;\s*AGL\b//g; s/\bAGL\s*;//g' {} +
           FRONTEND_LIB=$(find "$PWD/obs-lib" -maxdepth 1 -name "*obs-frontend-api*.dylib" | head -n 1)
           SWORD_LIB=$(find "$PWD/sword-build" -name "libsword.a" | head -n 1)
           cmake -B build-mac -S . \
