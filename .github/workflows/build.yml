@@ -109,6 +109,7 @@ jobs:
             "-DZLIB_INCLUDE_DIR=$zlibInc" `
             "-DZLIB_LIBRARY=$zlibLib" `
             "-DCMAKE_INSTALL_PREFIX=sword-inst"
+          (Get-Content sword-build/sword_static.vcxproj -Raw) -replace '<RuntimeLibrary>.*?</RuntimeLibrary>', '<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>' | Set-Content sword-build/sword_static.vcxproj
           Select-String -Path sword-build/sword_static.vcxproj -Pattern "RuntimeLibrary" | Select-Object -First 3
           cmake --build sword-build --config Release --target sword_static
           cmake --install sword-build --config Release --component core || $true
