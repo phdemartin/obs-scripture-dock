@@ -50,3 +50,10 @@ sudo apt install ./obs-scripture-dock_1.0.0_amd64.deb
 sudo apt install cmake g++ pkg-config libobs-dev libsword-dev qt6-base-dev
 ./scripts/install_local.sh
 ```
+
+---
+
+## Code Signing & License
+
+- Licensed under the **GNU General Public License v2.0** ([LICENSE](LICENSE)).
+- Free code signing provided by [SignPath.io](https://signpath.io/), using a certificate by [SignPath Foundation](https://signpath.org/).
