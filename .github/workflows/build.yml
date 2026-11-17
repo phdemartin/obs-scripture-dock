@@ -93,7 +93,9 @@ jobs:
             "-DZLIB_LIBRARY=$vcpkgLib" `
             "-DCMAKE_INSTALL_PREFIX=sword-inst"
           cmake --build sword-build --config Release --target sword_static
-          cmake --install sword-build --config Release
+          cmake --install sword-build --config Release --component core || $true
+          New-Item -ItemType Directory -Force -Path sword-inst/lib | Out-Null
+          Get-ChildItem sword-build -Filter "*sword*.lib" -Recurse | Select-Object -First 1 | Copy-Item -Destination sword-inst/lib/sword.lib -Force
       - name: Configure & Build Windows DLL
         shell: pwsh
         run: |
