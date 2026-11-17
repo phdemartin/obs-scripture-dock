@@ -101,7 +101,7 @@ jobs:
         run: |
           $obsInc = (Resolve-Path "obs-inc").Path -replace '\\', '/'
           $obsLib = (Resolve-Path "obs-lib").Path -replace '\\', '/'
-          $swordInc = (Resolve-Path "sword-inst/include/sword").Path -replace '\\', '/'
+          $swordInc = (Resolve-Path "sword-1.9.0/include").Path -replace '\\', '/'
           $swordLib = (Resolve-Path "sword-inst/lib/sword.lib").Path -replace '\\', '/'
           $zlibLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
           cmake -B build-win -S . `
