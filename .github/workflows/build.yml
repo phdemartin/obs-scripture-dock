@@ -75,15 +75,39 @@ jobs:
             $defLines | Set-Content $defPath
             lib /DEF:$defPath /OUT:"obs-lib/$dll.lib" /MACHINE:X64 | Out-Null
           }
+      - name: Build zlib & libsword (Static)
+        shell: pwsh
+        run: |
+          vcpkg install zlib:x64-windows-static
+          Invoke-WebRequest -Uri "https://crosswire.org/ftpmirror/pub/sword/source/v1.9/sword-1.9.0.tar.gz" -OutFile sword.tar.gz
+          tar -xzf sword.tar.gz
+          $vcpkgInc = "C:/vcpkg/installed/x64-windows-static/include"
+          $vcpkgLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
+          cmake -B sword-build -S sword-1.9.0 `
+            -DLIBSWORD_LIBRARY_TYPE=Static `
+            -DSWORD_BUILD_TESTS=OFF `
+            -DSWORD_BUILD_EXAMPLES=OFF `
+            -DSWORD_BUILD_UTILS=OFF `
+            "-DZLIB_INCLUDE_DIR=$vcpkgInc" `
+            "-DZLIB_LIBRARY=$vcpkgLib" `
+            "-DCMAKE_INSTALL_PREFIX=sword-inst"
+          cmake --build sword-build --config Release --target sword_static
+          cmake --install sword-build --config Release
       - name: Configure & Build Windows DLL
         shell: pwsh
         run: |
           $obsInc = (Resolve-Path "obs-inc").Path -replace '\\', '/'
           $obsLib = (Resolve-Path "obs-lib").Path -replace '\\', '/'
+          $swordInc = (Resolve-Path "sword-inst/include/sword").Path -replace '\\', '/'
+          $swordLib = (Resolve-Path "sword-inst/lib/sword.lib").Path -replace '\\', '/'
+          $zlibLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
           cmake -B build-win -S . `
             "-DOBS_INCLUDE_DIRS=$obsInc;$obsInc/obs" `
             "-DOBS_LIB_DIRS=$obsLib" `
-            "-DOBS_LIBRARIES=obs;obs-frontend-api"
+            "-DOBS_LIBRARIES=obs;obs-frontend-api" `
+            "-DSWORD_FOUND=TRUE" `
+            "-DSWORD_INCLUDE_DIRS=$swordInc" `
+            "-DSWORD_LIBRARIES=$swordLib;$zlibLib"
           cmake --build build-win --config Release
           New-Item -ItemType Directory -Force -Path dist/obs-scripture-dock/bin/64bit | Out-Null
           $dll = Get-ChildItem -Path build-win -Filter "obs-scripture-dock.dll" -Recurse | Select-Object -First 1

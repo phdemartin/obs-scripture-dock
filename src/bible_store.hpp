@@ -299,7 +299,12 @@ inline std::vector<SwordModuleEntry> discover_sword_bibles()
 {
     std::vector<SwordModuleEntry> list;
 #ifdef HAVE_SWORD
+#ifdef _WIN32
+    QByteArray sword_path = (QDir::homePath() + "/.sword").toUtf8();
+    sword::SWMgr mgr(sword_path.constData());
+#else
     sword::SWMgr mgr;
+#endif
     for (const auto &kv : mgr.Modules) {
         sword::SWModule *mod = kv.second;
         if (!mod || !mod->getType())
@@ -362,7 +367,12 @@ inline bool load_sword_module(const QString &mod_name, BibleData &out)
     (void)out;
     return false;
 #else
+#ifdef _WIN32
+    QByteArray sword_path = (QDir::homePath() + "/.sword").toUtf8();
+    sword::SWMgr mgr(sword_path.constData());
+#else
     sword::SWMgr mgr;
+#endif
     sword::SWModule *mod = mgr.getModule(mod_name.toUtf8().constData());
     if (!mod)
         return false;

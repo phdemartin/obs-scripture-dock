@@ -262,7 +262,8 @@ private:
             install_btn_->setEnabled(true);
             if (worker->ok) {
                 installed_any = true;
-                status_lbl_->setText("Installé dans ~/.sword : " + worker->mod_id_);
+                QString sword_dir = QDir::toNativeSeparators(QDir::homePath() + "/.sword");
+                status_lbl_->setText("Installé dans " + sword_dir + " : " + worker->mod_id_);
             } else {
                 status_lbl_->setText(worker->error_msg);
             }
