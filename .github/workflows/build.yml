@@ -84,8 +84,8 @@ jobs:
           $vcpkgInc = "C:/vcpkg/installed/x64-windows-static/include"
           $vcpkgLib = "C:/vcpkg/installed/x64-windows-static/lib/zlib.lib"
           cmake -B sword-build -S sword-1.9.0 `
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 `
-            -DLIBSWORD_LIBRARY_TYPE=Static `
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+            "-DLIBSWORD_LIBRARY_TYPE=Static" `
             -DSWORD_BUILD_TESTS=OFF `
             -DSWORD_BUILD_EXAMPLES=OFF `
             -DSWORD_BUILD_UTILS=OFF `
